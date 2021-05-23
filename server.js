@@ -40,30 +40,6 @@ io.sockets.on('connection',
       }
     );
 
-      socket.on('candidate',
-                function(data) {
-                    socket.broadcast.emit('candidate', data);
-                }
-               );
-
-      socket.on('savebuffer',
-                function(data) {
-                    socket.broadcast.emit('savebuffer', data);
-                }
-               );
-
-      socket.on('savebuffer1',
-                function(data) {
-                    socket.broadcast.emit('savebuffer1', data);
-                }
-               );
-
-      socket.on('savebuffer2',
-                function(data) {
-                    socket.broadcast.emit('savebuffer2', data);
-                }
-               );
-    
   socket.on('disconnect', function() {
     console.log("Client has disconnected");
   });
