@@ -11,12 +11,6 @@ function resizeCanvas() {
 }
 window.onResize = resizeCanvas;
 
-window.savebuffer = 0.;
-window.savebuffer1 = 0.;
-window.savebuffer2 = 0.;
-window.mix = 0.5;
-window.sliderX = 0.5;
-window.sliderY = 0.001;
 window.guiData = {};
 window.gui;
 
@@ -33,8 +27,10 @@ function  addGuiControls(){
         "mix2":0.,
         "sliderX":0.001,
         "sliderY":0.001,
-        "frames":0.001,
+        "frequencyBroadcast": 5,
+        "sender":false
     };
+    gui.add(guiData, 'sender');
     gui.add(guiData, 'savebuffer');
     gui.add(guiData, 'savebuffer1');
     gui.add(guiData, 'savebuffer2');
@@ -43,6 +39,7 @@ function  addGuiControls(){
     gui.add(guiData, 'mix2', 0., 1.).step(0.001);
     gui.add(guiData, 'sliderX', -1., 1.).step(0.001);
     gui.add(guiData, 'sliderY', -1., 1.).step(0.001);
+    gui.add(guiData, 'frequencyBroadcast', 1, 100 ).step(1);
 
 };
 
@@ -131,6 +128,39 @@ function setupMainScene(){
 
     document.body.appendChild(renderer.domElement);
 }
+
+function broadcastMessages(){
+    broadcast(JSON.stringify({
+		kind: 'savebuffer',
+		value: guiData.savebuffer,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'savebuffer1',
+		value: guiData.savebuffer1,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'savebuffer2',
+		value: guiData.savebuffer2,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix',
+		value: guiData.mix,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix1',
+		value: guiData.mix1,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix2',
+		value: guiData.mix2,
+	}));
+}
+
 var bufferScene, textureA, textureB;
 function setupBufferScene() {
     bufferScene = new THREE.Scene();
@@ -203,84 +233,121 @@ function initBufferScene(){
     bufferScene.add(bufferObject);
 }
 
+function bufferTexture(ping,pong,quadchannel,bufferchannel,broadcastState){
+    renderer.setRenderTarget(ping);
+    renderer.render(scene, camera);
 
+    renderer.setRenderTarget(null);
+    renderer.clear();
 
-let counter= 0;
-window.savebuffer = 0.;
-window.savebuffer1 = 0.;
-window.savebuffer2 = 0.;
-window.slider = 0.5;
-window.slider2 = 0.001
+    renderer.setRenderTarget(pong);
+    renderer.render(bufferScene, camera);
+
+    renderer.setRenderTarget(null);
+    renderer.clear();
+
+    quadchannel.value = pong.texture;
+    bufferchannel.value = ping.texture;
+
+}
+
+function broadcastSaveBuffer(){
+    if(guiData.sender){
+        console.log("Broadcasting: save buffer")
+        broadcast(JSON.stringify({
+		    kind: 'savebuffer',
+		    value: guiData.savebuffer,
+	    }));
+    }
+    guiData.savebuffer = false;
+}
+function broadcastSaveBuffer1(){
+    if(guiData.sender){
+        console.log("Broadcasting: save buffer 1")
+        broadcast(JSON.stringify({
+		    kind: 'savebuffer1',
+		    value: guiData.savebuffer1,
+	    }));
+    }
+    guiData.savebuffer1 = false;
+}
+function broadcastSaveBuffer2(){
+    if(guiData.sender){
+        console.log("Broadcasting: save buffer 2")
+        broadcast(JSON.stringify({
+		    kind: 'savebuffer2',
+		    value: guiData.savebuffer2,
+	    }));
+    }
+    guiData.savebuffer2 = false;
+}
+
+function broadcastMix(){
+    if(guiData.sender){
+        // console.log("Broadcasting: mix")
+        broadcast(JSON.stringify({
+		    kind: 'mix',
+		    value: guiData.mix,
+	    }));
+    }
+}
+function broadcastMix1(){
+    if(guiData.sender){
+        //console.log("Broadcasting: mix 1")
+        broadcast(JSON.stringify({
+		    kind: 'mix1',
+		    value: guiData.mix1,
+	    }));
+    }
+}
+function broadcastMix2(){
+    if(guiData.sender){
+        //console.log("Broadcasting: mix 2")
+        broadcast(JSON.stringify({
+		    kind: 'mix2',
+		    value: guiData.mix2,
+	    }));
+    }
+}
 
 function render() {
     requestAnimationFrame(render);
+        if(guiData.savebuffer){
+            bufferTexture(textureA, textureB, quad.material.uniforms.channel1, bufferMaterial.uniforms.channel0);
+            broadcastSaveBuffer();
+        }
 
-    if(guiData.savebuffer){
-        console.log("hi")
-        renderer.setRenderTarget(textureA);
-        renderer.render(scene, camera);
+        if(guiData.savebuffer1){
+            bufferTexture(textureA, textureC, quad.material.uniforms.channel2, bufferMaterial.uniforms.channel0);
+            broadcastSaveBuffer1();
+        }
 
-        renderer.setRenderTarget(null);
-        renderer.clear();
+        if(guiData.savebuffer2){
+            bufferTexture(textureA, textureD, quad.material.uniforms.channel3, bufferMaterial.uniforms.channel0);
+            broadcastSaveBuffer2();
+        }
 
-        renderer.setRenderTarget(textureB);
-        renderer.render(bufferScene, camera);
+        if(  quad.material.uniforms.mix.value != guiData.mix){
+            quad.material.uniforms.mix.value = guiData.mix;
+            broadcastMix();
+        }
+        if(  quad.material.uniforms.mix1.value != guiData.mix1){
+            quad.material.uniforms.mix1.value = guiData.mix1;
+            broadcastMix1();
 
-        renderer.setRenderTarget(null);
-        renderer.clear();
+        }
+        if(  quad.material.uniforms.mix2.value != guiData.mix2){
+            quad.material.uniforms.mix2.value = guiData.mix2;
+            broadcastMix2();
 
-       quad.material.uniforms.channel1.value = textureB.texture;
-       bufferMaterial.uniforms.channel0.value = textureA.texture;
-        console.log("clean")
-       guiData.savebuffer = false;
-    }
-
-    if(guiData.savebuffer1){
-        renderer.setRenderTarget(textureA);
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(null);
-        renderer.clear();
-
-        renderer.setRenderTarget(textureC);
-        renderer.render(bufferScene, camera);
-
-        renderer.setRenderTarget(null);
-        renderer.clear();
-
-        quad.material.uniforms.channel2.value = textureC.texture;
-        bufferMaterial.uniforms.channel0.value = textureA.texture;
-        guiData.savebuffer1 = false;
-    }
-
-    if(guiData.savebuffer2){
-        renderer.setRenderTarget(textureA);
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(null);
-        renderer.clear();
-
-        renderer.setRenderTarget(textureD);
-        renderer.render(bufferScene, camera);
-
-        renderer.setRenderTarget(null);
-        renderer.clear();
-
-        quad.material.uniforms.channel2.value = textureD.texture;
-        bufferMaterial.uniforms.channel0.value = textureA.texture;
-        guiData.savebuffer2 = false;
-    }
+        }
 
 
 
-
-    quad.material.uniforms.mix.value = guiData.mix;
-    quad.material.uniforms.mix1.value = guiData.mix1;
-    quad.material.uniforms.mix2.value = guiData.mix2;
     quad.material.uniforms.sliderX.value = guiData.sliderX;
     quad.material.uniforms.sliderY.value = guiData.sliderY;
 
-    counter ++;
+
     renderer.render(scene, camera);
 }
 
@@ -289,7 +356,6 @@ function onDocumentKeyDown(event) {
     var keyCode = event.which;
     if (keyCode == 49) {
         guiData.savebuffer = true;
-        console.log("received event",guiData);
     } else if (keyCode == 50) {
         guiData.savebuffer1 = true;
     } else if (keyCode == 51) {

@@ -40,27 +40,31 @@ io.sockets.on('connection',
       }
     );
 
-    socket.on('diffusionRate',
-      function(data) {
-        socket.broadcast.emit('diffusionRate', data);
-      }
-    );
-    
-    socket.on('interpolate',
-      function(data) {
-        socket.broadcast.emit('interpolate', data);
-    }
-    );
-  
-   socket.on('sharp',
-      function(data) {
-        socket.broadcast.emit('sharp', data);
-    }
-  );
+      socket.on('candidate',
+                function(data) {
+                    socket.broadcast.emit('candidate', data);
+                }
+               );
 
+      socket.on('savebuffer',
+                function(data) {
+                    socket.broadcast.emit('savebuffer', data);
+                }
+               );
+
+      socket.on('savebuffer1',
+                function(data) {
+                    socket.broadcast.emit('savebuffer1', data);
+                }
+               );
+
+      socket.on('savebuffer2',
+                function(data) {
+                    socket.broadcast.emit('savebuffer2', data);
+                }
+               );
     
   socket.on('disconnect', function() {
     console.log("Client has disconnected");
   });
  });
-

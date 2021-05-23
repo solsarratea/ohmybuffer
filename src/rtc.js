@@ -50,16 +50,25 @@ function connect() {
 function onmsg(e) {
 	let msg = JSON.parse(e.data);
     switch (msg.kind){
-      case 'interpolate': 
-        window.guiData.interpolate = msg.value;
+    case 'savebuffer':
+        window.guiData.savebuffer = msg.value;
         break;
-      case 'diffusionRate': 
-        window.guiData.diffusionRate1 = msg.value;
+    case 'savebuffer1':
+        window.guiData.savebuffer1 = msg.value;
         break;
-      case 'sharp': 
-        window.guiData.sharp = msg.value;
+    case 'savebuffer2':
+        window.guiData.savebuffer2 = msg.value;
         break;
-      default:
+    case 'mix':
+        window.guiData.mix = msg.value;
+        break;
+    case 'mix1':
+        window.guiData.mix1 = msg.value;
+        break;
+    case 'mix2':
+        window.guiData.mix2 = msg.value;
+        break;
+    default:
         console.log(`Invalid msg ${msg.kind}`)
     }
 }
