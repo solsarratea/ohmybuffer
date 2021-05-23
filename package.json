@@ -1,0 +1,26 @@
+{
+    "name": "ohmybuffer",
+    "version": "1.0.0",
+    "description": "experimental app for live perferomances",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "socket.io": "^2.3.0"
+    },
+    "engines": {
+        "node": "12.x"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/solsarratea/ohmybuffer.git"
+    },
+    "author": "sol sarratea <contact@solquemal.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/solsarratea/ohmybuffer/issues"
+    },
+    "homepage": "https://github.com/solsarratea/ohmybuffer#readme"
+}
