@@ -3,9 +3,10 @@ let socket;
 
 function connect() {
 	// Connect to signalling server:
-  console.log('connected to signalling server at https://continous-glitch.glitch.me/');
 
-  socket = io.connect('https://continous-glitch.glitch.me/');
+    signal_server = window.location.href
+    console.log('Connecting to:', window.location.href) //TODO: See if it is correct
+    socket = io.connect(signal_server);
 
 	let id = Math.floor(Math.random()*100000);
    
@@ -113,3 +114,47 @@ function createPeerConnection(socket,pcs,data,id){
 }
 
 connect();
+
+///////////////////////////////////// Broadcast Message
+
+function broadcastSingleMessage(kind, value){
+    if(guiData.sender){
+        console.log("Broadcasting: ", kind)
+        broadcast(JSON.stringify({
+		    kind: kind,
+		    value: value
+	    }));
+    }
+}
+
+function broadcastMessages(){
+    broadcast(JSON.stringify({
+		kind: 'savebuffer',
+		value: guiData.savebuffer,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'savebuffer1',
+		value: guiData.savebuffer1,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'savebuffer2',
+		value: guiData.savebuffer2,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix',
+		value: guiData.mix,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix1',
+		value: guiData.mix1,
+	}));
+
+    broadcast(JSON.stringify({
+		kind: 'mix2',
+		value: guiData.mix2,
+	}));
+}
