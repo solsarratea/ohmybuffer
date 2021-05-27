@@ -1,7 +1,8 @@
-function RTC(guiData){
+function RTC(guiData, RDdata){
     let datachannels = [];
     let socket;
     let data = guiData;
+    let RDControls= RDdata;
 
     this.connect = function() {
 
@@ -52,6 +53,9 @@ function RTC(guiData){
     this.onmsg = function(e) {
 	    let msg = JSON.parse(e.data);
         switch (msg.kind){
+        case'reaction-diffusion':
+            window.m = msge;
+            RDdata = msg.value;
         case 'savebuffer':
             data.savebuffer = msg.value;
             break;
@@ -69,6 +73,18 @@ function RTC(guiData){
             break;
         case 'mix2':
             data.mix2 = msg.value;
+            break;
+        case 'color1':
+            data.color1 = msg.value;
+            break;
+        case 'color2':
+            data.color2 = msg.value;
+            break;
+        case 'color3':
+            data.color3 = msg.value;
+            break;
+        case 'colorize':
+            data.colorize = msg.value;
             break;
         default:
             console.log(`Invalid msg ${msg.kind}`)
@@ -116,7 +132,7 @@ function RTC(guiData){
 
     this.broadcastSingleMessage = function (kind, value){
         if(data.sender){
-            console.log("Broadcasting: ", kind)
+
             this.broadcast(JSON.stringify({
 		        kind: kind,
 		        value: value
