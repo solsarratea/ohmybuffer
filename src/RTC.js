@@ -53,7 +53,7 @@ function RTC(guiData, RDdata){
     this.onmsg = function(e) {
 
 	    let msg = JSON.parse(e.data);
-        console.log(msg);
+
         switch (msg.kind){
         case 'zoom':
             data.zoom = msg.value;
