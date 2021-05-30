@@ -40,8 +40,8 @@ function OhMyBufferApp(canvas) {
         "zoom": 1.,
         "rotate": 0.,
         "iterations": 1,
-        "centerX": window.innerHeight/2.,
-        "centerY": window.innerWidth/2.,
+        "centerX": window.innerWidth/2.,
+        "centerY": window.innerHeight/2.,
         "rNeighbour": 1.,
         "tNeighbour": 0.,
 
@@ -490,11 +490,14 @@ function OhMyBufferApp(canvas) {
           }
       });
 
+      window.factorX=1.;
+      window.factorY=1.;
+
       /*** KEYBOARD CONTROL  ***/
       document.addEventListener("keydown", onDocumentKeyDown, false);
       function onDocumentKeyDown(event) {
           var keyCode = event.which;
-          console.log(keyCode)
+
           switch(keyCode){
           case 49: {
               guiData.savebuffer = true;
@@ -530,6 +533,36 @@ function OhMyBufferApp(canvas) {
           }
           case 190: {
               guiData.mix2 = Math.min(1.,guiData.mix2 + 0.05);
+              break
+          }
+          case 69: {
+              guiData.centerY = Math.min((guiData.centerY+factorY),window.innerHeight);
+              break
+          }
+          case 68: {
+              guiData.centerY= Math.max(0.,(guiData.centerY - factorY));
+              break
+
+          }
+          case 83: {
+              guiData.centerX=Math.max(0.,(guiData.centerX - factorX));
+              break
+          }
+          case 70: {
+              guiData.centerX=Math.min((guiData.centerX + factorX),window.innerWidth);
+              break
+          }
+          case 84: {
+              guiData.rotate = (guiData.rotate + 0.01)%6.28;
+              break
+          }
+          case 74: {
+              guiData.zoom =guiData.zoom+ 0.01;
+              break
+          }
+          case 75: {
+              guiData.zoom -= 0.01;
+
               break
           }
           default:
