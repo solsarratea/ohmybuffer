@@ -200,7 +200,7 @@ function OhMyBufferApp(canvas) {
           color = color*(1.-mix2)+prevText2*(mix2);
 
           if(cosPalette){
-            color.rgb = cosPaletteMap(color.r,vec3(0.5),color1,color2,color3);
+            color.rgb = cosPaletteMap(color.r,vec3(0.1),color1,color2,color3);
           }
 
           if(colorize){
@@ -403,7 +403,7 @@ function OhMyBufferApp(canvas) {
         this.updateMixes();
 
         /** Updates Color **/
-        fillMaterial.uniforms.colorize.value = guiData.colorize;
+
         if(fillMaterial.uniforms.color1.value.r != guiData.color1.r/255){
             fillMaterial.uniforms.color1.value.r = guiData.color1.r/255;
             fillMaterial.uniforms.color1.value.g = guiData.color1.g/255;
