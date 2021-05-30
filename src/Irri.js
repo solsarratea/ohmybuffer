@@ -36,7 +36,7 @@ precision highp float;
   vec2 pixel = texCoordVarying; vec3 finalColor;
   vec3 webcamCapture = texture2D(webcam,pixel).rgb;
   vec3 lastFrame = texture2D(backbuffer,pixel).rgb;
-  float step=3.;
+  float step=.5;
   float dx = 1./resolution.x *step;
   float dy = 1./resolution.y *step;
 
