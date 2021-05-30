@@ -17,6 +17,7 @@ function OhMyBufferApp(canvas) {
         "frequencyBroadcast": 5,
         "sender":false,
         "colorize":false,
+        "cosPalette":false,
         "color1": {
             "r": 255,
             "g": 255,
@@ -32,6 +33,18 @@ function OhMyBufferApp(canvas) {
             "g": 20.963541666666668,
             "b": 57.49999999999999
         },
+        "freq": 0.,
+        "freq1":0.,
+        "freq2":0.,
+        "sendVideo":false,
+        "zoom": 1.,
+        "rotate": 0.,
+        "iterations": 1,
+        "centerX": window.innerHeight/2.,
+        "centerY": window.innerWidth/2.,
+        "rNeighbour": 1.,
+        "tNeighbour": 0.,
+
     };
 
     /** Set Up Main Scene**/
@@ -50,7 +63,8 @@ function OhMyBufferApp(canvas) {
 
 
     /** Initialize RTC-Connection**/
-    var RDdata = actions[1].getguiData();
+    //var RDdata = actions[1].getguiData();
+    let RDdata;
     const rtc = new RTC(guiData,RDdata);
     rtc.connect();
 
@@ -87,7 +101,10 @@ function OhMyBufferApp(canvas) {
 
         const buffers = [
             new Copy(screenDimensions,textureA.texture),
-            new ReactionDiffusion(screenDimensions, textureA.texture, webcamTexture, guiControls)
+            //new ReactionDiffusion(screenDimensions, textureA.texture, webcamTexture, guiControls),
+            new Glitter(screenDimensions,textureA.texture, webcamTexture),
+            new Irri(screenDimensions,textureA.texture, webcamTexture),
+
         ];
         return buffers;
     }
@@ -120,8 +137,34 @@ function OhMyBufferApp(canvas) {
         uniform float sliderY;
 
         uniform bool colorize;
+        uniform bool cosPalette;
+
+        uniform float zoom;
+        uniform float rotate;
+
+        uniform float centerX;
+        uniform float centerY;
+        uniform vec2 resolution;
+
+         vec2 rotateP(vec2 uv, vec2 pivot, float rotation) {
+           float sine = sin(rotation);
+           float cosine = cos(rotation);
+
+           uv -= pivot;
+           uv.x = uv.x * cosine - uv.y * sine;
+           uv.y = uv.x * sine + uv.y * cosine;
+           uv += pivot;
+
+           return uv;
+       }
+
+
         float map(float value, float inMin, float inMax, float outMin, float outMax) {
               return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+        }
+
+        vec3 cosPaletteMap(  float t,  vec3 a,  vec3 b,  vec3 c, vec3 d ){
+              return a + b*cos( 6.28318*(c*t+d) );
         }
 
        vec4 applyColorMap(float source){
@@ -143,17 +186,28 @@ function OhMyBufferApp(canvas) {
 
         void main() {
           vec4 color;
-          vec4 webcam = texture2D(channel0,texCoordVarying);
-          vec4 prevText = applyColorMap(texture2D(channel1,texCoordVarying).g*3.);
+
+           vec2 center= vec2(centerX, centerY);
+
+           vec2 pixelT = (1. - .6*zoom) * (gl_FragCoord.xy - center) + center;
+           pixelT = rotateP(pixelT, center, rotate )/ resolution.xy;
+  vec4 webcam = texture2D(channel0,pixelT);
+          vec4 prevText = applyColorMap(texture2D(channel1,pixelT).g*3.);
           color = webcam*mix+prevText*(1.-mix);
-          vec4 prevText1 = texture2D(channel2,texCoordVarying);
+          vec4 prevText1 = texture2D(channel2,pixelT);
           color = color*(1.-mix1)+prevText1*(mix1);
           vec4 prevText2 = texture2D(channel3,texCoordVarying);
           color = color*(1.-mix2)+prevText2*(mix2);
 
-          if(colorize){
-            color = applyColorMap(color.g);
+          if(cosPalette){
+            color.rgb = cosPaletteMap(color.r,vec3(0.5),color1,color2,color3);
           }
+
+          if(colorize){
+            color= applyColorMap(max(color.r,max(color.g,color.b)));
+           }
+
+           color.a =1.;
 
            gl_FragColor = color;
         }`
@@ -164,6 +218,11 @@ function OhMyBufferApp(canvas) {
                 channel1: { type : 't', value : textureB.texture },
                 channel2: { type : 't', value : textureC.texture },
                 channel3: { type : 't', value : textureD.texture },
+                resolution : { type : 'v2', value : new THREE.Vector2( window.innerWidth, window.innerHeight) },
+                zoom:  {type:'f', value: guiData.zoom},
+                rotate:  {type:'f', value: guiData.rotate},
+                centerX:  {type:'f', value: guiData.centerX},
+                centerY:  {type:'f', value: guiData.centerY},
                 mix: {value: 0.5},
                 mix1: {value: 0.},
                 mix2: {value: 0.},
@@ -172,8 +231,8 @@ function OhMyBufferApp(canvas) {
                 colorize: {value: false},
                 color1:{type: 'c', value: new THREE.Color(255, 255, 0)},
                 color2:{type: 'c', value: new THREE.Color(255, 0, 0) },
-                color3:{type: 'c', value: new THREE.Color(0, 204, 255) }
-
+                color3:{type: 'c', value: new THREE.Color(0, 204, 255) },
+                cosPalette: {value: false}
 
             },
             vertexShader: vertex,
@@ -200,11 +259,16 @@ function OhMyBufferApp(canvas) {
         const datGui  = new dat.GUI({ autoPlace: true });
         window.gd =datGui;
         let folder = datGui.addFolder(`General Controls`);
+     //   let sendVideo = {sendvid: () => rtc.broadcastSingleMessage('sendVideo', webcamTexture)};
 
         folder.add(guiData, 'sender');
+       // folder.add(sendVideo, 'sendvid').name('send video');
         folder.add(guiData, 'savebuffer');
+        folder.add(guiData, 'freq').onFinishChange(() => rtc.broadcastSingleMessage('freq', guiData.freq));
         folder.add(guiData, 'savebuffer1');
+        folder.add(guiData, 'freq1').onFinishChange(() => rtc.broadcastSingleMessage('freq1', guiData.freq1));
         folder.add(guiData, 'savebuffer2');
+        folder.add(guiData, 'freq2').onFinishChange(() => rtc.broadcastSingleMessage('freq2', guiData.freq2));
         folder.add(guiData, 'mix', 0., 1.).step(0.001);
         folder.add(guiData, 'mix1', 0., 1.).step(0.001);
         folder.add(guiData, 'mix2', 0., 1.).step(0.001);
@@ -213,9 +277,21 @@ function OhMyBufferApp(canvas) {
 //      folder.add(guiData, 'frequencyBroadcast', 1, 100 ).step(1);
 
         folder.add(guiData, 'colorize');
+        folder.add(guiData, 'cosPalette');
         folder.addColor(guiData, 'color1');
         folder.addColor(guiData, 'color2');
         folder.addColor(guiData, 'color3');
+
+
+
+        folder.add(guiData, "zoom", -.3, 3.).step(0.0001);
+        folder.add(guiData, "rotate", -6.14, 6.14).step(0.000001);
+        folder.add(guiData, "centerX",0,window.innerWidth);
+        folder.add(guiData, "centerY",0,window.innerHeight);
+
+
+
+
 
         return datGui;
     }
@@ -295,26 +371,28 @@ function OhMyBufferApp(canvas) {
      //       elapsedTime = clock.getElapsedTime();
      //   }
 
+        var frame = renderer.info.render.frame;
         /** Update buffers **/
         var channelIn;
-        if(guiData.savebuffer){
+        if(guiData.savebuffer || (guiData.freq!=0 && frame % guiData.freq ==0.)){
             channelIn = fillMaterial.uniforms.channel1;
-            applyActionNtimes(textureA, textureB, channelIn, actions[1],2);
+            applyActionNtimes(textureA, textureB, channelIn, actions[1],1);
+            //applyActionNtimes(textureA, textureB, channelIn, actions[2],1);
             rtc.broadcastSingleMessage('savebuffer', guiData.savebuffer);
             guiData.savebuffer = false;
 
-            actions[1].updateMaterial();
-            RDdata = actions[1].getguiData();
-            rtc.broadcastSingleMessage('reaction-diffusion', RDdata);
+           // actions[1].updateMaterial();
+            //RDdata = actions[1].getguiData();
+           // rtc.broadcastSingleMessage('reaction-diffusion', RDdata);
         }
 
-        if(guiData.savebuffer1){
+        if(guiData.savebuffer1 || (guiData.freq1!=0 && frame % guiData.freq1 ==0.)){
             channelIn = fillMaterial.uniforms.channel2;
-            applyAction(textureA, textureC,channelIn, actions[0]);
+            applyAction(textureA, textureC,channelIn, actions[2]);
             rtc.broadcastSingleMessage('savebuffer1', guiData.savebuffer1);
             guiData.savebuffer1 = false;
         }
-        if(guiData.savebuffer2){
+        if(guiData.savebuffer2 || (guiData.freq2!=0 && frame % guiData.freq2 ==0.)){
             channelIn = fillMaterial.uniforms.channel3;
             applyAction(textureA, textureD,channelIn, actions[0]);
             rtc.broadcastSingleMessage('savebuffer2', guiData.savebuffer2);
@@ -333,25 +411,52 @@ function OhMyBufferApp(canvas) {
             rtc.broadcastSingleMessage('color1', guiData.color1);
         }
 
-        if(fillMaterial.uniforms.color2.value.r = guiData.color2.r/255){
+        if(fillMaterial.uniforms.color2.value.r != guiData.color2.r/255){
             fillMaterial.uniforms.color2.value.r = guiData.color2.r/255;
             fillMaterial.uniforms.color2.value.g = guiData.color2.g/255;
             fillMaterial.uniforms.color2.value.b = guiData.color2.b/255;
-            rtc.broadcastSingleMessage('color2', guiData.color2);
+            rtc.broadcastSingleMessage('color2', guiData.c111111111olor2);
         }
-        if (fillMaterial.uniforms.color3.value.r = guiData.color3.r/255){
+        if (fillMaterial.uniforms.color3.value.r != guiData.color3.r/255){
             fillMaterial.uniforms.color3.value.r = guiData.color3.r/255;
             fillMaterial.uniforms.color3.value.g = guiData.color3.g/255;
             fillMaterial.uniforms.color3.value.b = guiData.color3.b/255;
             rtc.broadcastSingleMessage('color3', guiData.color3);
         }
 
-        if(guiData.colorize){
+        if(guiData.colorize != fillMaterial.uniforms.colorize.value ){
             rtc.broadcastSingleMessage('colorize', guiData.colorize);
+            fillMaterial.uniforms.colorize.value = guiData.colorize;
+        }
+        if(guiData.cosPalette != fillMaterial.uniforms.cosPalette.value){
+            rtc.broadcastSingleMessage('cosPalette', guiData.cosPalette);
+            fillMaterial.uniforms.cosPalette.value = guiData.cosPalette;
         }
 
-        window.color1 = fillMaterial.uniforms.color1.value
-        window.d = guiData.color1;
+        if(guiData.zoom != fillMaterial.uniforms.zoom.value){
+            rtc.broadcastSingleMessage('zoom', guiData.zoom);
+            fillMaterial.uniforms.zoom.value = guiData.zoom;
+        }
+
+        if(guiData.rotate != fillMaterial.uniforms.rotate.value){
+            rtc.broadcastSingleMessage('rotate', guiData.rotate);
+            fillMaterial.uniforms.rotate.value = guiData.rotate;
+        }
+
+        if(guiData.centerX != fillMaterial.uniforms.centerX.value){
+            rtc.broadcastSingleMessage('centerX', guiData.centerX);
+            fillMaterial.uniforms.centerX.value = guiData.centerX;
+        }
+
+        if(guiData.centerY != fillMaterial.uniforms.centerY.value){
+            rtc.broadcastSingleMessage('centerY', guiData.centerY);
+            fillMaterial.uniforms.centerY.value = guiData.centerY;
+        }
+
+
+
+
+
 
         renderer.render(scene, camera);
     }
@@ -389,7 +494,7 @@ function OhMyBufferApp(canvas) {
       document.addEventListener("keydown", onDocumentKeyDown, false);
       function onDocumentKeyDown(event) {
           var keyCode = event.which;
-
+          console.log(keyCode)
           switch(keyCode){
           case 49: {
               guiData.savebuffer = true;
@@ -407,19 +512,11 @@ function OhMyBufferApp(canvas) {
               guiData.mix = Math.max(0.,guiData.mix - 0.05);
               break
           }
-          case 221: {
+          case 187: {
               guiData.mix = Math.min(1.,guiData.mix + 0.05);
               break
           }
-          case 219: {
-              guiData.mix = Math.max(0.,guiData.mix - 0.05);
-              break
-          }
-          case 221: {
-              guiData.mix = Math.min(1.,guiData.mix + 0.05);
-              break
-          }
-          case 186: {
+          case 192: {
               guiData.mix1 = Math.max(0.,guiData.mix1 - 0.05);
               break
           }
@@ -427,11 +524,11 @@ function OhMyBufferApp(canvas) {
               guiData.mix1 = Math.min(1.,guiData.mix1 + 0.05);
               break
           };
-          case 190: {
+          case 189: {
               guiData.mix2 = Math.max(0.,guiData.mix2 - 0.05);
               break
           }
-          case 191: {
+          case 190: {
               guiData.mix2 = Math.min(1.,guiData.mix2 + 0.05);
               break
           }

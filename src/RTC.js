@@ -51,11 +51,26 @@ function RTC(guiData, RDdata){
     }
 
     this.onmsg = function(e) {
+
 	    let msg = JSON.parse(e.data);
+        console.log(msg);
         switch (msg.kind){
-        case'reaction-diffusion':
-            window.m = msge;
-            RDdata = msg.value;
+        case 'zoom':
+            data.zoom = msg.value;
+            break;
+
+        case 'rotate':
+            data.rotate = msg.value;
+            break;
+
+        case 'centerX':
+            data.centerX = msg.value;
+            break;
+
+        case 'centerY':
+            data.centerY = msg.value;
+            break;
+
         case 'savebuffer':
             data.savebuffer = msg.value;
             break;
@@ -86,6 +101,20 @@ function RTC(guiData, RDdata){
         case 'colorize':
             data.colorize = msg.value;
             break;
+        case 'freq':
+            data.freq = msg.value;
+            break;
+        case 'freq1':
+            data.freq1 = msg.value;
+            break;
+        case 'freq2':
+            data.freq2 = msg.value;
+            break;
+        case 'cosPalette':
+            data.cosPalette = msg.value;
+            break;
+
+
         default:
             console.log(`Invalid msg ${msg.kind}`)
         }
