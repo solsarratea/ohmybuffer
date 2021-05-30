@@ -389,13 +389,56 @@ function OhMyBufferApp(canvas) {
       document.addEventListener("keydown", onDocumentKeyDown, false);
       function onDocumentKeyDown(event) {
           var keyCode = event.which;
-          if (keyCode == 49) {
+
+          switch(keyCode){
+          case 49: {
               guiData.savebuffer = true;
-          } else if (keyCode == 50) {
-              guiData.savebuffer1 = true;
-          } else if (keyCode == 51) {
-              guiData.savebuffer2 = true;
+              break;
           }
-      };
+          case 50: {
+              guiData.savebuffer1 = true;
+              break;
+          }
+          case 51: {
+              guiData.savebuffer2 = true;
+              break;
+          }
+          case 219: {
+              guiData.mix = Math.max(0.,guiData.mix - 0.05);
+              break
+          }
+          case 221: {
+              guiData.mix = Math.min(1.,guiData.mix + 0.05);
+              break
+          }
+          case 219: {
+              guiData.mix = Math.max(0.,guiData.mix - 0.05);
+              break
+          }
+          case 221: {
+              guiData.mix = Math.min(1.,guiData.mix + 0.05);
+              break
+          }
+          case 186: {
+              guiData.mix1 = Math.max(0.,guiData.mix1 - 0.05);
+              break
+          }
+          case 222: {
+              guiData.mix1 = Math.min(1.,guiData.mix1 + 0.05);
+              break
+          };
+          case 190: {
+              guiData.mix2 = Math.max(0.,guiData.mix2 - 0.05);
+              break
+          }
+          case 191: {
+              guiData.mix2 = Math.min(1.,guiData.mix2 + 0.05);
+              break
+          }
+          default:
+              break;
+
+          };
+      }
   }
 }
