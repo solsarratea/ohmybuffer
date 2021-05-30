@@ -415,7 +415,7 @@ function OhMyBufferApp(canvas) {
             fillMaterial.uniforms.color2.value.r = guiData.color2.r/255;
             fillMaterial.uniforms.color2.value.g = guiData.color2.g/255;
             fillMaterial.uniforms.color2.value.b = guiData.color2.b/255;
-            rtc.broadcastSingleMessage('color2', guiData.c111111111olor2);
+            rtc.broadcastSingleMessage('color2', guiData.color2);
         }
         if (fillMaterial.uniforms.color3.value.r != guiData.color3.r/255){
             fillMaterial.uniforms.color3.value.r = guiData.color3.r/255;
