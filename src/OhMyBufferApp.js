@@ -37,7 +37,7 @@ function OhMyBufferApp(canvas) {
         "freq1":0.,
         "freq2":0.,
         "sendVideo":false,
-        "zoom": 1.,
+        "zoom": 0.,
         "rotate": 0.,
         "iterations": 1,
         "centerX": window.innerWidth/2.,
